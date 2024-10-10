@@ -11,39 +11,38 @@ import {
 } from "react-native";
 import React, { useState, useRef } from "react";
 import { LinearGradient } from "expo-linear-gradient";
-import OnBoarding1 from "@/assets/svgs/onboarding1";
 import { onBoardingData } from "@/configs/constants";
 import { scale, verticalScale } from "react-native-size-matters";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
 
 export default function OnBoardingScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
-
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const contentOffsetX = event.nativeEvent.contentOffset.x;
     const currentIndex = Math.round(
-      contentOffsetX / Dimensions.get("window").width
+      contentOffsetX / event.nativeEvent.layoutMeasurement.width
     );
     setActiveIndex(currentIndex);
   };
 
-  const handleSkip = () => {
-    // Calculate the next index based on the active index
+  const handleSkip = async () => {
     const nextIndex = activeIndex + 1;
 
-    // If the next index is within bounds, scroll to the next slide
     if (nextIndex < onBoardingData.length) {
       scrollViewRef.current?.scrollTo({
         x: Dimensions.get("window").width * nextIndex,
         animated: true,
       });
+
+      setActiveIndex(nextIndex);
     } else {
-      // If it's the last slide, you can handle navigation or finish action
-      console.log("Onboarding complete or last index reached");
+      await AsyncStorage.setItem("onboarding", "true");
+      router.push("/(routes)/home");
     }
   };
-
   return (
     <LinearGradient
       colors={["#66bb6a", "#ffd54f"]}
@@ -57,14 +56,13 @@ export default function OnBoardingScreen() {
         <Text style={styles.skipText}>Skip</Text>
         <AntDesign name="arrowright" size={scale(16)} color={"white"} />
       </Pressable>
-
       <ScrollView
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onScroll={handleScroll}
-        scrollEventThrottle={16} // Scroll event throttle for smooth updates
-        ref={scrollViewRef} // Ref to control ScrollView
+        scrollEventThrottle={16} // scroll event throttle for smooth updates
+        ref={scrollViewRef} // optional for programmatically scroll
       >
         {onBoardingData.map((item: onBoardingDataType, index: number) => (
           <View key={index} style={styles.slide}>
@@ -74,7 +72,6 @@ export default function OnBoardingScreen() {
           </View>
         ))}
       </ScrollView>
-
       <View style={styles.paginationContainer}>
         {onBoardingData.map((_, index) => (
           <View
@@ -121,6 +118,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: scale(8),
   },
+
   dot: {
     width: scale(8),
     height: scale(8),
@@ -133,6 +131,8 @@ const styles = StyleSheet.create({
     top: verticalScale(30),
     right: scale(20),
     flexDirection: "row",
+    zIndex: 1,
+    elevation: 1,
   },
   skipText: {
     color: "#fff",
@@ -140,3 +140,5 @@ const styles = StyleSheet.create({
     fontWeight: "400",
   },
 });
+
+/* sa 47:44 last mo */
